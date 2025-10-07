@@ -6,3 +6,4 @@
 <p> Chess piece icons are from: https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces</p>
 <p> This project utilizes the Guava library: https://github.com/google/guava/releases </p>
 <p> Software Architecture & Design's version: https://github.com/amir650/BlackWidow-Chess </p>
+<p> The game of chess: https://en.wikipedia.org/wiki/Chess </p>
