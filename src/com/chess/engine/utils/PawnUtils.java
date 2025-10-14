@@ -5,6 +5,7 @@ import com.chess.engine.Position;
 import com.chess.engine.board.Board;
 import com.chess.engine.board.Square;
 import com.chess.engine.moves.Move;
+import com.chess.engine.moves.pawn.PawnPromotion;
 import com.chess.engine.moves.pawn.advance.OneSquarePawnMove;
 import com.chess.engine.moves.pawn.advance.TwoSquarePawnMove;
 import com.chess.engine.moves.pawn.attack.EnPassantAttack;
@@ -49,11 +50,11 @@ public class PawnUtils {
      * @param legalMoves    The list that holds all the legal moves for the pawn on the current chessboard.
      */
     public static void calculatePawnLegalMoves(final int sourceRank,
-                                                final int sourceFile,
-                                                final Alliance pieceAlliance,
-                                                final Board board,
-                                                final Pawn movedPawn,
-                                                final List<Move> legalMoves) {
+                                               final int sourceFile,
+                                               final Alliance pieceAlliance,
+                                               final Board board,
+                                               final Pawn movedPawn,
+                                               final List<Move> legalMoves) {
         // Pawn advancements
         calculatePawnAdvancements(sourceRank, sourceFile, pieceAlliance, board, movedPawn, legalMoves);
 
@@ -77,26 +78,27 @@ public class PawnUtils {
                                                   final Board board,
                                                   final Pawn movedPawn,
                                                   final List<Move> legalMoves) {
-        for (int i = 0; i < PAWN_RANK_OFFSETS.length; i++) {
-            final int destRank = sourceRank + (PAWN_RANK_OFFSETS[i] * pieceAlliance.getDirection());
-            final int destFile = sourceFile + (PAWN_FILE_OFFSETS[i] * pieceAlliance.getDirection());
-            final int destIndex = getPositionIndex(destRank, destFile);
-            final Square destSquare = board.getSquare(ALL_BOARD_POSITIONS_CACHE.get(destIndex));
-            final Position destPosition = destSquare.getSquarePosition();
-
-            if (isValidPosition(destRank, destFile)) {
-                if (!destSquare.isSquareOccupied()) {
-                    // Move on an empty square
-                    if (PAWN_RANK_OFFSETS[i] == -1) {
-                        // One square advance with possible pawn promotion
-                        // TODO: implement one square advance with possible pawn promotion
-                        legalMoves.add(new OneSquarePawnMove(board, movedPawn, destPosition));
-                    } else if (PAWN_RANK_OFFSETS[i] == -2) {
-                        if (movedPawn.isFirstMove() && isInitialPawnPosition(pieceAlliance, sourceRank)) {
-                            final Position behindDestRank = ALL_BOARD_POSITIONS_CACHE.get(destIndex + RANK_NUM_SQUARES);
-                            if (!board.getSquare(behindDestRank).isSquareOccupied()) {
-                                // Two square advance (pawn jump)
-                                legalMoves.add(new TwoSquarePawnMove(board, movedPawn, destPosition));
+        for (final int pawnRankOffset : PAWN_RANK_OFFSETS) {
+            if (isValidPosition(sourceRank, sourceFile)) {
+                final int destRank = sourceRank + (pawnRankOffset * pieceAlliance.getDirection());
+                final int destIndex = getPositionIndex(destRank, sourceFile);
+                if (isValidPosition(destRank, sourceFile)) {
+                    final Position destPosition = ALL_BOARD_POSITIONS_CACHE.get(destIndex);
+                    final Square destSquare = board.getSquare(destPosition);
+                    if (!destSquare.isSquareOccupied()) {
+                        // Move on an empty square
+                        if (Math.abs(destRank - sourceRank) == 1) {
+                            // One square advance with possible pawn promotion
+                            legalMoves.add(pieceAlliance.isPromotionSquare(destPosition) ?
+                                    new PawnPromotion(new OneSquarePawnMove(board, movedPawn, destPosition)) :
+                                    new OneSquarePawnMove(board, movedPawn, destPosition));
+                        } else if (Math.abs(destRank - sourceRank) == 2) {
+                            if (movedPawn.isFirstMove() && isInitialPawnPosition(pieceAlliance, sourceRank)) {
+                                final Position behindDestRank = ALL_BOARD_POSITIONS_CACHE.get(destIndex + RANK_NUM_SQUARES);
+                                if (!board.getSquare(behindDestRank).isSquareOccupied()) {
+                                    // Two square advance (pawn jump)
+                                    legalMoves.add(new TwoSquarePawnMove(board, movedPawn, destPosition));
+                                }
                             }
                         }
                     }
@@ -122,26 +124,32 @@ public class PawnUtils {
                                              final Pawn movedPawn,
                                              final List<Move> legalMoves) {
         for (int i = 0; i < PAWN_RANK_ATTACK_OFFSETS.length; i++) {
-            final int destRank = sourceRank + (PAWN_RANK_ATTACK_OFFSETS[i] * pieceAlliance.getDirection());
-            final int destFile = sourceFile + (PAWN_FILE_ATTACK_OFFSETS[i] * pieceAlliance.getDirection());
-            final int destIndex = getPositionIndex(destRank, destFile);
-            final Square destSquare = board.getSquare(ALL_BOARD_POSITIONS_CACHE.get(destIndex));
-            final Position destPosition = destSquare.getSquarePosition();
+            if (isValidPosition(sourceRank, sourceFile)) {
+                final int destRank = sourceRank + (PAWN_RANK_ATTACK_OFFSETS[i] * pieceAlliance.getDirection());
+                final int destFile = sourceFile + (PAWN_FILE_ATTACK_OFFSETS[i] * pieceAlliance.getDirection());
+                final int destIndex = getPositionIndex(destRank, destFile);
 
-            if (isValidPosition(destRank, destFile)) {
-                if (destSquare.isSquareOccupied()) {
-                    final Piece pieceOnSquare = destSquare.getPiece();
-                    if (pieceAlliance != pieceOnSquare.getPieceAlliance()) {
-                        // Attack opponent's piece
-                        // TODO: implement pawn attack into pawn promotion
-                        legalMoves.add(new PawnAttackMove(board, movedPawn, destPosition, pieceOnSquare));
-                    }
-                } else if (board.getEnPassantPawn() != null) {
-                    final Pawn enPassantPawn = board.getEnPassantPawn();
-                    final int attackFileOffset = PAWN_FILE_ATTACK_OFFSETS[i];
-                    if (enPassantPawnOnSide(enPassantPawn, sourceRank, sourceFile, pieceAlliance, attackFileOffset)) {
-                        if (pieceAlliance != enPassantPawn.getPieceAlliance()) {
-                            legalMoves.add(new EnPassantAttack(board, movedPawn, destPosition, enPassantPawn));
+                if (isValidPosition(destRank, destFile)) {
+                    final Position destPosition = ALL_BOARD_POSITIONS_CACHE.get(destIndex);
+                    final Square destSquare = board.getSquare(ALL_BOARD_POSITIONS_CACHE.get(destIndex));
+                    if (destSquare.isSquareOccupied()) {
+                        final Piece pieceOnSquare = destSquare.getPiece();
+                        if (pieceAlliance != pieceOnSquare.getPieceAlliance()) {
+                            // Attack opponent's piece with possible pawn promotion
+                            legalMoves.add(pieceAlliance.isPromotionSquare(destPosition) ?
+                                    new PawnPromotion(new PawnAttackMove(board,
+                                            movedPawn,
+                                            destPosition,
+                                            pieceOnSquare)) :
+                                    new PawnAttackMove(board, movedPawn, destPosition, pieceOnSquare));
+                        }
+                    } else if (board.getEnPassantPawn() != null) {
+                        final Pawn enPassantPawn = board.getEnPassantPawn();
+                        final int attackFileOffset = PAWN_FILE_ATTACK_OFFSETS[i];
+                        if (enPassantPawnOnSide(enPassantPawn, sourceRank, sourceFile, pieceAlliance, attackFileOffset)) {
+                            if (pieceAlliance != enPassantPawn.getPieceAlliance()) {
+                                legalMoves.add(new EnPassantAttack(board, movedPawn, destPosition, enPassantPawn));
+                            }
                         }
                     }
                 }

@@ -16,7 +16,7 @@ public class NullMove extends Move {
      * Creates a NullMove object affiliated with the chessboard.
      */
     public NullMove() {
-        super(null, new Position(8, 0));
+        super(null, new Position(8, 8));
     }
 
     /**
@@ -34,6 +34,6 @@ public class NullMove extends Move {
      */
     @Override
     public Position getCurrentPosition() {
-        return new Position(-1, 0);
+        return new Position(-1, -1);
     }
 }

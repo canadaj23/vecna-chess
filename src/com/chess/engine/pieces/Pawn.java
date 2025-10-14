@@ -4,14 +4,14 @@ import com.chess.engine.Alliance;
 import com.chess.engine.Position;
 import com.chess.engine.board.Board;
 import com.chess.engine.moves.Move;
-import com.chess.engine.utils.PawnUtils;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.chess.engine.utils.PiecePositions.NFM_BP_POSITIONS_CACHE;
-import static com.chess.engine.utils.PiecePositions.NFM_WP_POSITIONS_CACHE;
+import static com.chess.engine.Position.getPositionIndex;
+import static com.chess.engine.utils.PawnUtils.*;
+import static com.chess.engine.utils.PiecePositions.*;
 
 /**
  * Represents the pawn piece in chess. The pawn can move forward one or two squares on its first move, otherwise one
@@ -54,7 +54,7 @@ public class Pawn extends Piece {
         final List<Move> legalMoves = new ArrayList<>();
         final int sourceRank = this.piecePosition.rank(), sourceFile = this.piecePosition.file();
 
-        PawnUtils.calculatePawnLegalMoves(sourceRank, sourceFile, this.pieceAlliance, board, this, legalMoves);
+        calculatePawnLegalMoves(sourceRank, sourceFile, this.pieceAlliance, board, this, legalMoves);
 
         return ImmutableList.copyOf(legalMoves);
     }
@@ -69,6 +69,7 @@ public class Pawn extends Piece {
     public Pawn movePiece(final Move move) {
         return this.pieceAlliance.isBlack() ? (Pawn) NFM_BP_POSITIONS_CACHE.get(move.getDestinationIndex()) :
                                               (Pawn) NFM_WP_POSITIONS_CACHE.get(move.getDestinationIndex());
+
     }
 
     /**

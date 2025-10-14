@@ -140,6 +140,15 @@ public abstract class Move {
     }
 
     /**
+     * Returns the board the move is performed on.
+     *
+     * @return The board the move is performed on.
+     */
+    public Board getBoard() {
+        return this.board;
+    }
+
+    /**
      * Returns whether the move and the other move are referentially and objectively equal.
      *
      * @param other The other object in question.

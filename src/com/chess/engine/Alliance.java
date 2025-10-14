@@ -52,6 +52,17 @@ public enum Alliance {
         public int getOppositeDirection() {
             return DOWN_DIRECTION;
         }
+
+        /**
+         * Returns whether the destination square results in a pawn promotion.
+         *
+         * @param position The position of the square to look at.
+         * @return Whether the destination square results in a pawn promotion.
+         */
+        @Override
+        public boolean isPromotionSquare(final Position position) {
+            return position.rank() == 0;
+        }
     },
     BLACK {
         /**
@@ -93,6 +104,17 @@ public enum Alliance {
         public int getOppositeDirection() {
             return UP_DIRECTION;
         }
+
+        /**
+         * Returns whether the destination square results in a pawn promotion.
+         *
+         * @param position The position of the square to look at.
+         * @return Whether the destination square results in a pawn promotion.
+         */
+        @Override
+        public boolean isPromotionSquare(final Position position) {
+            return position.rank() == 7;
+        }
     };
 
     /**
@@ -111,6 +133,14 @@ public enum Alliance {
      * @return A chosen move maker.
      */
     public abstract Player choosePlayer(final WhitePlayer whitePlayer, final BlackPlayer blackPlayer);
+
+    /**
+     * Returns whether the destination square results in a pawn promotion.
+     *
+     * @param position The position of the square to look at.
+     * @return Whether the destination square results in a pawn promotion.
+     */
+    public abstract boolean isPromotionSquare(final Position position);
 
     /**
      * Returns true or false if the alliance is white.
